@@ -6,6 +6,11 @@ Run the main.py to start the application
 
 requirements: tkinter and python
 
+## Admin Login Credentials:
+- Username: Admin
+- Password: adminpass
+
+
 
 
 
@@ -14,5 +19,5 @@ requirements: tkinter and python
 - Pragun K Kirani - BT2024176
 - H Sanjay - BT2024192
 - Romir Gupta - BT2024195
-- Sachin Nain - BT2024201
+- Sachin Singh Nain - BT2024201
 
