@@ -15,6 +15,7 @@ class LibraryUI:
         self.file_manager = FileManager("books.csv")
         self.books = []
         self.filtered_items = self.books.copy()
+        self.filtered_books=[]
         self.colour1 = "#030C26" #bg
         self.colour2 = "#27418C" #text colour
         self.colour3 = "#6387F2" #textbox colour
@@ -184,18 +185,18 @@ class LibraryUI:
         search_query = self.search_entry.get().lower()
         self.update_list()
         self.load_book_list()
-        filtered_books = [book for book in self.books if search_query in book.title.lower() or search_query in book.author.lower()]
+        self.filtered_books = [book for book in self.books if search_query in book.title.lower() or search_query in book.author.lower()]
         if self.borrowedOnlyVar.get():
-            filtered_books = [book for book in filtered_books if book.is_borrowed]
+            self.filtered_books = [book for book in self.filtered_books if book.is_borrowed]
         self.listbox.delete(0, tk.END)
         self.listbox2.delete(0, tk.END)
 
-        for book in filtered_books:
+        for book in self.filtered_books:
             self.listbox.insert(tk.END, str(book))
-        for book in filtered_books:
+        for book in self.filtered_books:
             self.listbox2.insert(tk.END, str('Borrowed' if 'Borrowed' in str(book) else 'Available'))
 
-        if not filtered_books:
+        if not self.filtered_books:
             messagebox.showinfo("No Results", "No books found matching your search.")
 
     def add_book(self):
@@ -223,7 +224,18 @@ class LibraryUI:
 
         try:
             selected_index = self.listbox.curselection()[0]
-            del self.books[selected_index]
+            if len(self.filtered_books)>=(selected_index+1):
+                # book is self.filtered_books[selected_index]
+                # remove book in self.books
+                book_name = (self.filtered_books[selected_index]).title
+                for index, i in enumerate(self.books):
+                    if i.title ==book_name:
+                        print(i)
+                        del self.books[index]
+                del self.filtered_books[selected_index]
+            else:
+                del self.books[selected_index]
+
             self.file_manager.save_books(self.books)
             self.update_list()
             self.load_book_list()
@@ -233,11 +245,14 @@ class LibraryUI:
     def borrow_book(self):
         try:
             selected_index = self.listbox.curselection()[0]
-            book = self.books[selected_index]
+            if len(self.filtered_books)>=(selected_index+1):
+                book = self.filtered_books[selected_index]
+            else:
+                book= self.books[selected_index]
             if book.is_borrowed:
                 messagebox.showinfo("Borrow Error", "This book is already borrowed.")
             else:
-                book.is_on= True
+                book.is_borrowed= True
                 book.borrower = self.current_user.username  # Track the borrower
                 book.borrow_date = datetime.now().date()
                 self.file_manager.save_books(self.books)
@@ -250,7 +265,13 @@ class LibraryUI:
     def return_book(self):
         try:
             selected_index = self.listbox.curselection()[0]
-            book = self.books[selected_index]
+            if len(self.filtered_books) >= (selected_index + 1):
+                book = self.filtered_books[selected_index]
+            elif len(self.filtered_items) > 0:
+                book = self.filtered_items[selected_index]
+            else:
+                book = self.books[selected_index]
+                
             if not book.is_borrowed:
                 messagebox.showinfo("Return Error", "This book is not currently borrowed.")
             elif book.borrower != self.current_user.username and not self.current_user.is_admin:
@@ -258,6 +279,7 @@ class LibraryUI:
             else:
                 book.is_borrowed = None
                 book.borrower = None  # Clear the borrower
+                book.borrow_date = None
                 self.file_manager.save_books(self.books)
                 self.update_list()
                 self.load_book_list()
